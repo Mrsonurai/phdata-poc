@@ -1,0 +1,22 @@
+## STEPS
+1. Go to challenge_1 and create the S3 bucket for keeping the backend for whole terraform.
+
+2. Go to terraform form directory and run all the terraform and apply it.
+
+3. Get the key from secret manager and store in local
+rm -rf sonu-test-bastion.pem
+nano sonu-test-bastion.pem
+sudo cp -R sonu-test-bastion.pem /Users/sonu/Desktop/MyWork/personal/ec2-test-sample/phdata/challenge_1
+chmod 400 sonu-test-bastion.pem
+
+4. Connect to VM if needed
+5. Go via the Task-presenatation one by one and explain all
+6. Before doing challenge-1 point-7 Use below 
+# ## Manual change for Install MySQL Workbench on your local machine and establish a connection to
+# # MySQL on port 3307.
+# # sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+# # sudo systemctl restart mysql
+7. Use the public ip as connection and password to connect to database and run the query written for query_for_task_8
+8. After running the queries run the script_9 for making progress
+9. Cretaed a repo and moved the code there
+10. Created the pipeline and pushed. Just merge the pr for making all changes happened

@@ -1,0 +1,167 @@
+# ## BB CI with atlassian
+# image: atlassian/default-image:3
+
+# pipelines:
+#   default:
+#     - step: &store-mysql-creds-and-deploy
+#         name: Store MySQL Credentials and Deploy
+#         script:
+#           # Install necessary tools
+#           - echo "Installing necessary tools..."
+#           - apt-get update && apt-get install -y awscli jq
+#           # Add Bitbucket to known hosts
+#           - echo $SSH_PRIVATE_KEY
+#           # Define environment variables
+#           - export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}
+#           - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+#           - export SECRET_NAME=my-mysql-credentials
+#           - export MYSQL_USER=admin
+#           - export MYSQL_PASSWORD=${MYSQL_PASSWORD}
+#           - export MYSQL_HOST=${MYSQL_HOST}
+#           - export MYSQL_PORT=3307
+          
+#           # Store MySQL credentials in AWS Secrets Manager
+#           - echo "Storing MySQL credentials in AWS Secrets Manager..."
+#           - aws secretsmanager create-secret ---region us-west-1 -name $SECRET_NAME --secret-string "{\"username\":\"$MYSQL_USER\",\"password\":\"$MYSQL_PASSWORD\"}" || echo "Secret already exists, skipping creation."
+          
+#           # Fetch MySQL credentials from AWS Secrets Manager
+#           - echo "Fetching MySQL credentials from AWS Secrets Manager..."
+#           - export MYSQL_USER=$(aws secretsmanager get-secret-value --region us-west-1 --secret-id $SECRET_NAME --query SecretString --output text | jq -r .username)
+#           - export MYSQL_PASSWORD=$(aws secretsmanager get-secret-value --region us-west-1 --secret-id $SECRET_NAME --query SecretString --output text | jq -r .password)
+
+#           # # Ensure .ssh directory exists
+#           # - mkdir -p /root/.ssh
+          
+#           # # Reference the SSH key file directly from the repository path
+#           # - SSH_PRIVATE_KEY_NEW="phdata/challenge_1/sonu-test-bastion.pem"
+
+#           # # Verify if the SSH key file exists
+#           # - if [ -f "$SSH_PRIVATE_KEY_NEW" ]; then echo "SSH key file exists"; else echo "SSH key file does not exist"; fi
+
+#           # # Copy the SSH key to the right location
+#           # - cat "$SSH_PRIVATE_KEY_NEW" > /root/.ssh/id_rsa
+#           # - chmod 400 /root/.ssh/id_rsa
+
+#           # # Verify SSH connection
+#           # - echo "Testing SSH connection..."
+#           # - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'echo "SSH connection successful"'
+
+#           # # Transfer script and execute
+#           # - echo "Transferring and executing script..."
+#           # - scp -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no phdata/challenge_1/script_3_4.sh ubuntu@${MYSQL_HOST}:/home/ubuntu/
+#           # - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'bash /home/ubuntu/script_3_4.sh'
+#           - mkdir -p /root/.ssh
+          
+#           # Reference the SSH key file directly from the repository path
+#           - SSH_PRIVATE_KEY_NEW="phdata/challenge_1/sonu-test-bastion.pem"
+
+#           # Verify if the SSH key file exists
+#           - if [ -f "$SSH_PRIVATE_KEY_NEW" ]; then echo "SSH key file exists"; else echo "SSH key file does not exist"; fi
+
+#           # Copy the SSH key to the right location
+#           - cat "$SSH_PRIVATE_KEY_NEW" > /root/.ssh/id_rsa
+#           - chmod 400 /root/.ssh/id_rsa
+
+#           # Add the remote host to known_hosts to avoid host key verification failure
+#           - ssh-keyscan -H ${MYSQL_HOST} >> /root/.ssh/known_hosts
+
+#           # Test connection to the EC2 instance (Optional, for debugging)
+#           - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} "echo 'Connection successful'"
+
+#           # Run deployment script on the EC2 instance
+#           - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'bash -s' < phdata/challenge_1/script_3_4.sh
+#   tags:
+#     '[0-9]*-[0-9]*-[0-9]*.[0-9]*':
+#       - step: *store-mysql-creds-and-deploy
+
+#   branches:
+#     'main':
+#       - step: *store-mysql-creds-and-deploy
+
+#   pull-requests:
+#     '**':
+#       - step: *store-mysql-creds-and-deploy
+
+
+
+## BB CI with atlassian
+image: atlassian/default-image:3
+
+pipelines:
+  default:
+    - step: &store-mysql-creds-and-deploy
+        name: Store MySQL Credentials and Deploy
+        script:
+          # Install necessary tools
+          - echo "Installing necessary tools..."
+          - apt-get update && apt-get install -y awscli jq
+
+          # Define environment variables
+          - export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}
+          - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+          - export SECRET_NAME=my-mysql-credentials
+          - export MYSQL_USER=admin
+          - export MYSQL_PASSWORD=${MYSQL_PASSWORD}
+          - export MYSQL_HOST=${MYSQL_HOST}
+          - export MYSQL_PORT=3307
+
+          # Store MySQL credentials in AWS Secrets Manager
+          - echo "Storing MySQL credentials in AWS Secrets Manager..."
+          - aws secretsmanager create-secret --region us-west-1 --name $SECRET_NAME --secret-string "{\"username\":\"$MYSQL_USER\",\"password\":\"$MYSQL_PASSWORD\"}" || echo "Secret already exists, skipping creation."
+
+          # Fetch MySQL credentials from AWS Secrets Manager
+          - echo "Fetching MySQL credentials from AWS Secrets Manager..."
+          - export MYSQL_USER=$(aws secretsmanager get-secret-value --region us-west-1 --secret-id $SECRET_NAME --query SecretString --output text | jq -r .username)
+          - export MYSQL_PASSWORD=$(aws secretsmanager get-secret-value --region us-west-1 --secret-id $SECRET_NAME --query SecretString --output text | jq -r .password)
+
+          # Ensure .ssh directory exists
+          - mkdir -p /root/.ssh
+
+          # Reference the SSH key file directly from the repository path
+          - SSH_PRIVATE_KEY_NEW="phdata/challenge_1/sonu-test-bastion.pem"
+
+          # Verify if the SSH key file exists
+          - if [ -f "$SSH_PRIVATE_KEY_NEW" ]; then echo "SSH key file exists"; else echo "SSH key file does not exist"; exit 1; fi
+
+          # Copy the SSH key to the right location
+          - cp "$SSH_PRIVATE_KEY_NEW" /root/.ssh/id_rsa
+          - chmod 400 /root/.ssh/id_rsa
+
+          # # Add the remote host to known_hosts to avoid host key verification failure
+          # - ssh-keyscan -H ${MYSQL_HOST} >> /root/.ssh/known_hosts
+
+          # # Test connection to the EC2 instance (Optional, for debugging)
+          # - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} "echo 'Connection successful'"
+
+          # Verify the script file exists before transferring
+          - echo "Checking if the deployment script exists..."
+          - if [ -f "phdata/challenge_1/script_3_4.sh" ]; then echo "Deployment script exists"; else echo "Deployment script does not exist"; exit 1; fi
+
+          # # Transfer the script to the EC2 instance
+          # - echo "Transferring deployment script to the EC2 instance..."
+          # - scp -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no phdata/challenge_1/script_3_4.sh ubuntu@${MYSQL_HOST}:/home/ubuntu/
+
+          # # Set execute permissions on the script
+          # - echo "Setting execute permissions on the deployment script..."
+          # - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'chmod +x /home/ubuntu/script_3_4.sh'
+
+          # # Execute the deployment script on the EC2 instance
+          # - echo "Executing deployment script on the EC2 instance..."
+          # - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'bash /home/ubuntu/script_3_4.sh'
+
+          #Add the remote host to known_hosts to avoid host key verification failure
+          - ssh-keyscan -H ${MYSQL_HOST} >> /root/.ssh/known_hosts
+
+          # Test connection to the EC2 instance (Optional, for debugging)
+          - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} "echo 'Connection successful'"
+
+          # Run deployment script on the EC2 instance
+          - ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${MYSQL_HOST} 'bash -s' < phdata/challenge_1/script_3_4.sh
+          
+  branches:
+    'main':
+      - step: *store-mysql-creds-and-deploy
+
+  pull-requests:
+    '**':
+      - step: *store-mysql-creds-and-deploy
